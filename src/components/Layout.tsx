@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import logo from '../assets/img/logo.png';
 import {
     LayoutDashboard,
     Zap,
@@ -17,7 +16,6 @@ import {
     PlusIcon
 } from 'lucide-react'
 
-
 interface LayoutProps {
     children: React.ReactNode
 }
@@ -32,16 +30,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         { name: 'Leads', href: '/leads', icon: Users },
         { name: 'Email Templates', href: '/email-templates', icon: Mail },
         { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-        { name: 'Settings', href: '/settings', icon: Settings },
+        { name: 'Settings', href: '/settings', icon: Settings }
     ]
 
-    // Get user data from global variable set by Laravel
     const user = (window as any).__USER__;
     const client = (window as any).__CLIENT__;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
-            {/* Mobile sidebar overlay */}
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 relative z-0">
+            {/* Mobile overlay */}
             {sidebarOpen && (
                 <div
                     className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
@@ -53,11 +50,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}>
                 <div className="flex h-full flex-col glass-effect">
-                    {/* Logo */}
                     <div className="flex items-center justify-between p-6 border-b border-white/20">
                         <div className="flex items-center space-x-3">
                             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                                <img src={logo} alt="VolvCRM Logo" />
+                                <Zap className="w-6 h-6 text-white" />
                             </div>
                             <div>
                                 <h1 className="text-xl font-bold gradient-text">VolvCRM</h1>
@@ -72,11 +68,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         </button>
                     </div>
 
-                    {/* Navigation */}
                     <nav className="flex-1 p-4 space-y-2">
                         {navigation.map((item) => {
                             const Icon = item.icon
-                            // Fix: Check if current path starts with the nav item href, except for dashboard
                             const isActive = item.href === '/dashboard'
                                 ? location.pathname === item.href
                                 : location.pathname.startsWith(item.href)
@@ -95,14 +89,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         })}
                     </nav>
 
-                    {/* User profile */}
                     <div className="p-4 border-t border-white/20">
                         <div className="flex items-center space-x-3 p-3 rounded-xl bg-white/10">
                             <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
                                 <User className="w-5 h-5 text-white" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 truncate">{user?.name ?? 'Unknown USer'}</p>
+                                <p className="text-sm font-semibold text-gray-900 truncate">{user?.name ?? 'Unknown User'}</p>
                                 <p className="text-xs text-gray-500 truncate">{client?.brand_name}</p>
                             </div>
                         </div>
@@ -110,10 +103,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </div>
             </div>
 
-            {/* Main content */}
-            <div className="lg:pl-64">
-                {/* Top bar */}
-                <header className="glass-effect border-b border-white/20 sticky top-0 z-30">
+            {/* Main content wrapper */}
+            <div className="lg:pl-64 relative z-0">
+                {/* Sticky header with proper z-index */}
+                <header className="glass-effect border-b border-white/20 sticky top-0 z-50">
                     <div className="flex items-center justify-between px-6 py-4">
                         <div className="flex items-center space-x-4">
                             <button
@@ -123,7 +116,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <Menu className="w-5 h-5" />
                             </button>
 
-                            {/* Search */}
                             <div className="relative hidden md:block">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                                 <input
@@ -134,12 +126,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             </div>
                         </div>
 
-                        <div className="flex items-center space-x-4">
-                            <Link to="/notifications" className="relative p-2 rounded-xl hover:bg-white/20 transition-colors">
+                        {/* THIS WAS BROKEN — now fixed */}
+                        <div className="flex items-center space-x-4 z-50 relative">
+                            <Link
+                                to="/notifications"
+                                className="relative p-2 rounded-xl hover:bg-white/20 transition-colors"
+                            >
                                 <Bell className="w-5 h-5 text-gray-600" />
                             </Link>
 
-                            <Link to="/team-members" className="relative p-2 rounded-xl hover:bg-white/20 transition-colors">
+                            <Link
+                                to="/team-members"
+                                className="relative p-2 rounded-xl hover:bg-white/20 transition-colors"
+                            >
                                 <UserPlus className="w-5 h-5 text-gray-600" />
                             </Link>
 
@@ -147,12 +146,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <User className="w-5 h-5 text-white" />
                             </div>
                         </div>
-
                     </div>
                 </header>
 
-                {/* Page content */}
-                <main className="p-6">
+                {/* MAIN CONTENT with stacking fix */}
+                <main className="p-6 relative z-10">
                     {children}
                 </main>
             </div>

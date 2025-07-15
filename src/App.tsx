@@ -24,8 +24,7 @@ function App() {
         <Route path="/team-members" element={<TeamMembers />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/settings" element={<Settings />} />
-        <Route path="/Notifications" element={<Notifications />} />
-
+        <Route path="/notifications" element={<Notifications />} />
       </Routes>
     </Layout>
   )

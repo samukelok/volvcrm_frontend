@@ -21,8 +21,7 @@ const Settings = () => {
         name: (window as any).__USER__?.name || '',
         email: (window as any).__USER__?.email || '',
         company: (window as any).__CLIENT__?.brand_name || '',
-        phone: (window as any).__USER__?.phone || '',
-        bio: (window as any).__USER__?.bio || ''
+        companyMail: (window as any).__CLIENT__?.company_email || ''
     });
 
     // Password form state
@@ -256,24 +255,15 @@ const Settings = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Company Email</label>
                                         <input
-                                            type="tel"
-                                            value={profileForm.phone}
-                                            onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                                            className="input-field"
+                                            type="email"
+                                            value={profileForm.companyMail}
+                                            onChange={(e) => setProfileForm({ ...profileForm, companyMail: e.target.value })}
+                                            readOnly
+                                            className="input-field bg-gray-100"
                                         />
                                     </div>
-                                </div>
-
-                                <div className="mt-6">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-                                    <textarea
-                                        rows={3}
-                                        value={profileForm.bio}
-                                        onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
-                                        className="input-field resize-none"
-                                    />
                                 </div>
 
                                 <div className="flex justify-end mt-6">
