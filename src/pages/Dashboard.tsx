@@ -1,6 +1,7 @@
-import { useAuth } from '../context/AuthContext'
-import React from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link, Navigate } from 'react-router-dom';
+import axios from 'axios';
 import {
     TrendingUp,
     Users,
@@ -12,8 +13,20 @@ import {
     Clock,
     CheckCircle,
     AlertCircle
-} from 'lucide-react'
+} from 'lucide-react';
 import FlashMessage from '../components/FlashMessage';
+
+// Configure axios to include CSRF token for Laravel
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+if (csrfToken) {
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+}
+
+type FlashMessages = {
+    success?: string;
+    error?: string;
+};
 
 const Dashboard = () => {
     const { user } = useAuth()
@@ -21,6 +34,37 @@ const Dashboard = () => {
     if (!user) {
         return <Navigate to="/login" replace />
     }
+
+    // Flash message state
+    const [flashMessage, setFlashMessage] = useState<string | null>(null);
+    const [flashType, setFlashType] = useState<'success' | 'error' | 'info'>('success');
+
+    // Check for flash messages on component mount
+    useEffect(() => {
+        const flashData = (window as any).__FLASH__ || {};
+        
+        // Handle different flash message formats
+        if (typeof flashData === 'string') {
+            // Direct flash message string
+            setFlashMessage(flashData);
+            setFlashType('success');
+        } else if (flashData.success) {
+            // Laravel session flash format
+            setFlashMessage(flashData.success);
+            setFlashType('success');
+        } else if (flashData.error) {
+            // Laravel session flash format
+            setFlashMessage(flashData.error);
+            setFlashType('error');
+        } else if (flashData.info) {
+            // Laravel session flash format
+            setFlashMessage(flashData.info);
+            setFlashType('info');
+        }
+        
+        // Clear flash messages from window to prevent showing again
+        (window as any).__FLASH__ = {};
+    }, []);
 
     const stats = [
         {
@@ -143,8 +187,12 @@ const Dashboard = () => {
     return (
 
         <div className="space-y-8">
-            {/* Success Message */}
-            <FlashMessage />
+            {/* Flash Message */}
+            <FlashMessage
+                message={flashMessage ?? undefined}
+                type={flashType}
+                onClose={() => setFlashMessage(null)}
+            />
 
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
