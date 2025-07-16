@@ -67,3 +67,7 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-400;
 }
+
+#invite-modal{
+    @apply mt-20;
+}
