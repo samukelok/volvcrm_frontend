@@ -36,6 +36,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     const user = (window as any).__USER__;
     const client = (window as any).__CLIENT__;
 
+    const [avatar, setAvatar] = useState<string | null>((window as any).__USER__?.avatar || null);
+
+    const getAvatarSrc = () => {
+        if (avatar) {
+            if (avatar.startsWith('data:')) {
+                return avatar;
+            }
+            return `/storage/${avatar}`;
+        }
+        return '/default-avatar.png'; // fallback 
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 relative z-0">
             {/* Mobile overlay */}
@@ -92,7 +104,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <div className="p-4 border-t border-white/20">
                         <div className="flex items-center space-x-3 p-3 rounded-xl bg-white/10">
                             <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                                <User className="w-5 h-5 text-white" />
+                                {avatar ? (
+                                    <img
+                                        src={getAvatarSrc()}
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            // Fallback to default image if avatar fails to load
+                                            (e.target as HTMLImageElement).src = '/img/user.png';
+                                        }}
+                                    />
+                                ) : (
+                                    <User className="w-8 h-8 text-white" />
+                                )}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-gray-900 truncate">{user?.name ?? 'Unknown User'}</p>
@@ -106,7 +130,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Main content wrapper */}
             <div className="lg:pl-64 relative z-0">
                 {/* Sticky header with proper z-index */}
-                <header className="glass-effect border-b border-white/20 sticky top-0 z-50">
+                <header className="glass-effect border-b border-white/20 sticky top-0 z-[40]">
                     <div className="flex items-center justify-between px-6 py-4">
                         <div className="flex items-center space-x-4">
                             <button
@@ -115,15 +139,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             >
                                 <Menu className="w-5 h-5" />
                             </button>
-
-                            <div className="relative hidden md:block">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Search..."
-                                    className="pl-10 pr-4 py-2 w-64 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 bg-white/50 backdrop-blur-sm"
-                                />
-                            </div>
                         </div>
 
                         {/* THIS WAS BROKEN — now fixed */}
@@ -143,7 +158,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             </Link>
 
                             <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
-                                <User className="w-5 h-5 text-white" />
+                                {avatar ? (
+                                    <img
+                                        src={getAvatarSrc()}
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            // Fallback to default image if avatar fails to load
+                                            (e.target as HTMLImageElement).src = '/img/user.png';
+                                        }}
+                                    />
+                                ) : (
+                                    <User className="w-8 h-8 text-white" />
+                                )}
                             </div>
                         </div>
                     </div>
