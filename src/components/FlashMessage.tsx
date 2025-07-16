@@ -94,7 +94,7 @@ const FlashMessage: React.FC<FlashMessageProps> = ({
 
   return (
     <div className={`
-      fixed top-4 right-4 z-50 max-w-md w-full mx-auto
+      fixed top-20 right-4 z-50 max-w-md w-full mx-auto
       transform transition-all duration-300 ease-in-out
       ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'}
     `}>
