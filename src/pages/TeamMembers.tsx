@@ -272,7 +272,7 @@ const TeamMembers = () => {
     }
 
     return (
-        <div className="space-y-8 p-6 max-w-7xl mx-auto">
+        <div className="space-y-8 max-w-7xl mx-auto">
             {/* Flash Message */}
             <FlashMessage
                 message={flashMessage ?? undefined}
@@ -525,13 +525,18 @@ const TeamMembers = () => {
                 )}
             </div>
 
-            {/* Invite Modal */}
+            {/* Invite Modal - WITH PROPER Z-INDEX */}
             {showInviteModal && (
-                <div className="fixed inset-0 z-50 overflow-y-auto">
+                <div className="fixed inset-0 overflow-y-auto z-[60]">
                     <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onClick={() => setShowInviteModal(false)}></div>
+                        {/* Backdrop with high z-index */}
+                        <div 
+                            className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity z-[60]" 
+                            onClick={() => setShowInviteModal(false)}
+                        ></div>
 
-                        <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                        {/* Modal content with even higher z-index */}
+                        <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full relative z-[61]" id='invite-modal'>
                             <div className="bg-white px-6 pt-6 pb-4">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-semibold text-gray-900 flex items-center">
