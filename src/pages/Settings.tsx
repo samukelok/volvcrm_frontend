@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { User, Bell, Shield, Palette, Globe, Database, Loader2, Camera } from 'lucide-react';
 import FlashMessage from '../components/FlashMessage';
+import { useAvatar } from '../context/AvatarContext';
 
 // Configure axios for Laravel
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
@@ -31,7 +32,7 @@ const Settings = () => {
         new_password_confirmation: ''
     });
 
-    const [avatar, setAvatar] = useState<string | null>((window as any).__USER__?.avatar || null);
+    const { avatar, setAvatar } = useAvatar();
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
 
@@ -182,51 +183,43 @@ const Settings = () => {
                         <div className="space-y-6">
 
                             <div className="flex items-center space-x-6">
-                                <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center overflow-hidden">
+                                <div className="relative w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center overflow-hidden">
                                     {avatar ? (
                                         <img
                                             src={getAvatarSrc()}
                                             alt="Profile"
                                             className="w-full h-full object-cover"
                                             onError={(e) => {
-                                                // Fallback to default image if avatar fails to load
                                                 (e.target as HTMLImageElement).src = '/img/user.png';
                                             }}
                                         />
                                     ) : (
                                         <User className="w-8 h-8 text-white" />
                                     )}
+                                    {isUploading && (
+                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                            <Loader2 className="w-6 h-6 text-white animate-spin" />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="flex flex-col items-start space-y-1">
-                                    <label className="btn-secondary cursor-pointer flex items-center gap-2 p-0 m-0">
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            width="16"
-                                            height="16"
-                                            fill="currentColor"
-                                            className="bi bi-camera2"
-                                            viewBox="0 0 16 16"
-                                        >
-                                            <path d="M5 8c0-1.657 2.343-3 4-3V4a4 4 0 0 0-4 4" />
-                                            <path d="M12.318 3h2.015C15.253 3 16 3.746 16 4.667v6.666c0 .92-.746 1.667-1.667 1.667h-2.015A5.97 5.97 0 0 1 9 14a5.97 5.97 0 0 1-3.318-1H1.667C.747 13 0 12.254 0 11.333V4.667C0 3.747.746 3 1.667 3H2a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1h.682A5.97 5.97 0 0 1 9 2c1.227 0 2.367.368 3.318 1M2 4.5a.5.5 0 1 0-1 0 .5.5 0 0 0 1 0M14 8A5 5 0 1 0 4 8a5 5 0 0 0 10 0" />
-                                        </svg>
+                                    <label htmlFor="avatar-upload" className="btn-secondary cursor-pointer flex items-center gap-2">
+                                        <Camera className="w-4 h-4" />
                                         {isUploading ? 'Uploading...' : 'Change Avatar'}
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleAvatarChange}
-                                            className="hidden"
-                                            disabled={isUploading}
-                                        />
                                     </label>
-
-                                    <p className="text-sm text-gray-500">JPG, GIF or PNG. 1MB max.</p>
+                                    <input
+                                        id="avatar-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleAvatarChange}
+                                        className="hidden"
+                                        disabled={isUploading}
+                                    />
+                                    <p className="text-sm text-gray-500 ml-6">JPG, GIF or PNG. 1MB max.</p>
                                 </div>
-
-
                             </div>
-
+                            
                             <form onSubmit={handleProfileSubmit}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
@@ -278,7 +271,7 @@ const Settings = () => {
                     </div>
 
                     {/* Notification Settings */}
-                    <div className="glass-effect rounded-2xl p-6">
+                    <div className="glass-effect rounded-2xl p-6" id='notifications'>
                         <h2 className="text-xl font-semibold text-gray-900 mb-6">Notification Preferences</h2>
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
@@ -317,7 +310,7 @@ const Settings = () => {
                     </div>
 
                     {/* Security Settings */}
-                    <div className="glass-effect rounded-2xl p-6">
+                    <div className="glass-effect rounded-2xl p-6" id='security'>
                         <h2 className="text-xl font-semibold text-gray-900 mb-6">Security</h2>
                         <div className="space-y-6">
                             <form onSubmit={handlePasswordSubmit}>
@@ -369,8 +362,7 @@ const Settings = () => {
 
 
                     {/* Domain Settings */}
-                    {/* Domain Settings */}
-                    <div className="glass-effect rounded-2xl p-6">
+                    <div className="glass-effect rounded-2xl p-6" id='domain'>
                         <h2 className="text-xl font-semibold text-gray-900 mb-6">Domain Configuration</h2>
                         <div className="space-y-4">
                             <div>
