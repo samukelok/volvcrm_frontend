@@ -34,12 +34,7 @@ const CreateFunnelRequest = () => {
       ]
     }
     
-    // Remove the flat color properties since they're now in brand_colors
-    delete submitData.primaryColor
-    delete submitData.secondaryColor
-    
     console.log('Form submitted:', submitData)
-    // Handle form submission
   }
 
   const ctaOptions = [
@@ -189,63 +184,6 @@ const CreateFunnelRequest = () => {
                   </label>
                 )
               })}
-            </div>
-          </div>
-        </div>
-
-        {/* Branding */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900 border-b border-white/20 pb-2">
-            Branding
-          </h2>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="primaryColor" className="block text-sm font-medium text-gray-700 mb-2">
-                Primary Brand Color
-              </label>
-              <div className="flex items-center space-x-3">
-                <input
-                  type="color"
-                  id="primaryColor"
-                  name="primaryColor"
-                  value={formData.primaryColor}
-                  onChange={handleInputChange}
-                  className="h-12 w-20 border border-gray-300 rounded-lg cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={formData.primaryColor}
-                  onChange={handleInputChange}
-                  name="primaryColor"
-                  className="flex-1 input-field"
-                  placeholder="#3B82F6"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="secondaryColor" className="block text-sm font-medium text-gray-700 mb-2">
-                Secondary Brand Color
-              </label>
-              <div className="flex items-center space-x-3">
-                <input
-                  type="color"
-                  id="secondaryColor"
-                  name="secondaryColor"
-                  value={formData.secondaryColor}
-                  onChange={handleInputChange}
-                  className="h-12 w-20 border border-gray-300 rounded-lg cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={formData.secondaryColor}
-                  onChange={handleInputChange}
-                  name="secondaryColor"
-                  className="flex-1 input-field"
-                  placeholder="#10B981"
-                />
-              </div>
             </div>
           </div>
         </div>
