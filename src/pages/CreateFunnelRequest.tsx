@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, redirect } from 'react-router-dom'
 import { ArrowLeft, FileText, MessageCircle, Phone, Mail } from 'lucide-react'
 import axios from 'axios';
@@ -8,6 +8,21 @@ axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 if (csrfToken) {
   axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+}
+
+function getThreeBusinessDaysFromNow(): string {
+  const date = new Date();
+  let added = 0;
+
+  while (added < 3) {
+    date.setDate(date.getDate() + 1);
+    const day = date.getDay();
+    if (day !== 0 && day !== 6) {
+      added++;
+    }
+  }
+
+  return date.toISOString().split('T')[0];
 }
 
 const CreateFunnelRequest = () => {
@@ -25,12 +40,26 @@ const CreateFunnelRequest = () => {
   const [serverMessage, setServerMessage] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
+    const { name, value } = e.target;
+
+    if (name === 'deadline') {
+      const selected = new Date(value);
+      const day = selected.getDay();
+
+      if (value < minDeadline) {
+        setDeadlineError('Deadline must be at least 3 business days from today.');
+      } else if (day === 0 || day === 6) {
+        setDeadlineError('Please choose a weekday (Monday to Friday).');
+      } else {
+        setDeadlineError('');
+      }
+    }
+
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
-    }))
-  }
+      [name]: value,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,6 +156,14 @@ const CreateFunnelRequest = () => {
       </div>
     );
   }
+
+
+  const [minDeadline, setMinDeadline] = useState('');
+  const [deadlineError, setDeadlineError] = useState('');
+
+  useEffect(() => {
+    setMinDeadline(getThreeBusinessDaysFromNow());
+  }, []);
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -319,7 +356,7 @@ const CreateFunnelRequest = () => {
 
           <div>
             <label htmlFor="deadline" className="block text-sm font-medium text-gray-700 mb-2">
-              Preferred Deadline
+              Preferred Deadline <span className="text-xs text-gray-500">(Min: 3 business days, weekdays only)</span>
             </label>
             <input
               type="date"
@@ -327,10 +364,12 @@ const CreateFunnelRequest = () => {
               name="deadline"
               value={formData.deadline}
               onChange={handleInputChange}
-              min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+              min={minDeadline}
               className="input-field max-w-xs"
             />
+            {deadlineError && <p className="text-red-500 text-sm mt-1">{deadlineError}</p>}
           </div>
+
         </div>
 
         {/* Submit */}
