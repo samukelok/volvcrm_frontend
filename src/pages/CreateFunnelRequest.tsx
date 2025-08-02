@@ -125,6 +125,14 @@ const CreateFunnelRequest = () => {
     }
   ]
 
+  const [minDeadline, setMinDeadline] = useState('');
+  const [deadlineError, setDeadlineError] = useState('');
+
+  useEffect(() => {
+    setMinDeadline(getThreeBusinessDaysFromNow());
+  }, []);
+
+  
   if (success) {
     return (
       <div className="p-6 bg-green-50 border border-green-300 rounded-lg">
@@ -156,15 +164,7 @@ const CreateFunnelRequest = () => {
       </div>
     );
   }
-
-
-  const [minDeadline, setMinDeadline] = useState('');
-  const [deadlineError, setDeadlineError] = useState('');
-
-  useEffect(() => {
-    setMinDeadline(getThreeBusinessDaysFromNow());
-  }, []);
-
+  
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Header */}
