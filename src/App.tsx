@@ -10,6 +10,7 @@ import TeamMembers from './pages/TeamMembers'
 import Analytics from './pages/Analytics'
 import Settings from './pages/Settings'
 import Notifications from './pages/Notifications'
+import FunnelViewScreen from './pages/FunnelViewScreen'
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/funnel-requests" element={<FunnelRequests />} />
         <Route path="/funnel-requests/create" element={<CreateFunnelRequest />} />
+        <Route path="/funnels/:id" element={<FunnelViewScreen />} />
         <Route path="/leads" element={<Leads />} />
         <Route path="/email-templates" element={<EmailTemplates />} />
         <Route path="/team-members" element={<TeamMembers />} />
