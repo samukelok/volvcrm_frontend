@@ -1,8 +1,10 @@
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useQuery } from 'react-query';
-import { ArrowLeft, Eye, Download } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { ArrowLeft, Download, Trash2, Edit } from 'lucide-react';
+import { Dialog } from '@headlessui/react';
+import CreateFunnelRequest from './CreateFunnelRequest';
 
 interface Funnel {
   id: number;
@@ -23,28 +25,115 @@ interface Funnel {
 }
 
 const fetchFunnel = async (id: string): Promise<Funnel> => {
-  const response = await axios.get(`http://127.0.0.1:8000/funnels/${id}`);
+  const response = await axios.get(`/funnels/${id}`);
   return response.data;
 };
 
 const FunnelViewScreen = () => {
   const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  
   const { data: funnel, isLoading, error } = useQuery<Funnel>(
     ['funnel', id],
     () => fetchFunnel(id!),
     { enabled: !!id }
   );
 
+  const deleteMutation = useMutation(
+    (reason: string) => axios.delete(`/funnels/${id}`, { data: { reason } }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['funnels']);
+        navigate('/funnel-requests');
+      }
+    }
+  );
+
+  const handleDelete = () => {
+    if (!deleteReason.trim()) {
+      alert('Please provide a reason for deletion');
+      return;
+    }
+    deleteMutation.mutate(deleteReason);
+  };
+
   if (isLoading) return <div className="text-center py-8">Loading funnel...</div>;
   if (error) return <div className="text-center py-8 text-red-500">Error loading funnel</div>;
   if (!funnel) return <div className="text-center py-8">Funnel not found</div>;
 
+  if (isEditing) {
+    return <CreateFunnelRequest editData={funnel} onCancel={() => setIsEditing(false)} />;
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <Link to="/funnel-requests" className="flex items-center text-blue-600 mb-6">
-        <ArrowLeft className="w-5 h-5 mr-2" />
-        Back to Funnels
-      </Link>
+      <Dialog
+        open={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="w-full max-w-md rounded-xl bg-white p-6">
+            <Dialog.Title className="text-lg font-bold">Delete Funnel</Dialog.Title>
+            <Dialog.Description className="mt-2 text-gray-600">
+              Please provide a reason for deleting this funnel. This will help us improve our services.
+            </Dialog.Description>
+
+            <textarea
+              className="mt-4 w-full p-2 border rounded-md"
+              rows={3}
+              placeholder="Reason for deletion..."
+              value={deleteReason}
+              onChange={(e) => setDeleteReason(e.target.value)}
+            />
+
+            <div className="mt-4 flex justify-end space-x-3">
+              <button
+                onClick={() => setIsDeleteOpen(false)}
+                className="px-4 py-2 text-gray-700 rounded-md hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                disabled={deleteMutation.isLoading}
+              >
+                {deleteMutation.isLoading ? 'Deleting...' : 'Confirm Delete'}
+              </button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+
+      <div className="flex justify-between items-center mb-6">
+        <Link to="/funnel-requests" className="flex items-center text-blue-600">
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Back to Funnels
+        </Link>
+        
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setIsEditing(true)}
+            className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            <Edit className="w-4 h-4 mr-1" />
+            Edit
+          </button>
+          <button
+            onClick={() => setIsDeleteOpen(true)}
+            className="flex items-center px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700"
+          >
+            <Trash2 className="w-4 h-4 mr-1" />
+            Delete
+          </button>
+        </div>
+      </div>
 
       <div className="glass-effect rounded-2xl p-6">
         <div className="flex justify-between items-start mb-6">
@@ -120,7 +209,7 @@ const FunnelViewScreen = () => {
                     </p>
                   </div>
                   <a
-                    href={`http://127.0.0.1:8000/storage/${file.file_path}`}
+                    href={`/storage/${file.file_path}`}
                     download
                     className="ml-4 p-2 text-blue-600 hover:bg-blue-50 rounded-full"
                   >

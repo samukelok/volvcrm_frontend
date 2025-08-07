@@ -29,7 +29,7 @@ interface ApiResponse {
 }
 
 const fetchFunnels = async (): Promise<ApiResponse> => {
-  const response = await axios.get('http://127.0.0.1:8000/my-funnels');
+  const response = await axios.get('/my-funnels');
   return response.data;
 };
 
@@ -212,7 +212,7 @@ const FunnelRequests = () => {
                       {funnel.media.map(media => (
                         <a 
                           key={media.id}
-                          href={`http://127.0.0.1:8000/storage/${media.file_path}`}
+                          href={`/storage/${media.file_path}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:underline text-xs"
