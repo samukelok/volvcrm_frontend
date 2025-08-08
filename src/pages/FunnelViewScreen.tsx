@@ -17,6 +17,8 @@ interface Funnel {
   priority: string;
   status: string;
   created_at: string;
+  requested_by: string;
+  preview_link: string;
   media?: Array<{
     id: number;
     file_path: string;
@@ -184,6 +186,21 @@ const FunnelViewScreen = () => {
                 {new Date(funnel.created_at).toLocaleDateString()}
               </p>
             </div>
+            
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Created By</h3>
+              <p className="mt-1 text-gray-900">{funnel.requested_by}</p>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Preview Link</h3>
+              <p className="mt-1 text-gray-900">
+                <a href={funnel.preview_link} target="_blank" rel="noopener noreferrer">
+                  {funnel.preview_link}
+                </a>
+              </p>
+            </div>
+            
           </div>
         </div>
 
