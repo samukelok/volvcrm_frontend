@@ -494,6 +494,7 @@ const CreateFunnelRequest: React.FC<CreateFunnelRequestProps> = ({ editData, onC
                             value={formData.deadline}
                             onChange={handleInputChange}
                             min={minDeadline}
+                            required
                             className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                         />
                         {deadlineError && <p className="text-red-500 text-sm mt-1">{deadlineError}</p>}

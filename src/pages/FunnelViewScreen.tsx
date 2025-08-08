@@ -38,7 +38,7 @@ const FunnelViewScreen = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-  
+
   const { data: funnel, isLoading, error } = useQuery<Funnel>(
     ['funnel', id],
     () => fetchFunnel(id!),
@@ -118,7 +118,7 @@ const FunnelViewScreen = () => {
           <ArrowLeft className="w-5 h-5 mr-2" />
           Back to Funnels
         </Link>
-        
+
         <div className="flex space-x-2">
           <button
             onClick={() => setIsEditing(true)}
@@ -140,11 +140,10 @@ const FunnelViewScreen = () => {
       <div className="glass-effect rounded-2xl p-6">
         <div className="flex justify-between items-start mb-6">
           <h1 className="text-2xl font-bold text-gray-900">{funnel.title}</h1>
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-            funnel.status === 'live' ? 'bg-green-100 text-green-800' :
-            funnel.status === 'in progress' ? 'bg-blue-100 text-blue-800' :
-            'bg-yellow-100 text-yellow-800'
-          }`}>
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${funnel.status === 'live' ? 'bg-green-100 text-green-800' :
+              funnel.status === 'in progress' ? 'bg-blue-100 text-blue-800' :
+                'bg-yellow-100 text-yellow-800'
+            }`}>
             {funnel.status}
           </span>
         </div>
@@ -186,7 +185,7 @@ const FunnelViewScreen = () => {
                 {new Date(funnel.created_at).toLocaleDateString()}
               </p>
             </div>
-            
+
             <div>
               <h3 className="text-sm font-medium text-gray-500">Created By</h3>
               <p className="mt-1 text-gray-900">{funnel.requested_by}</p>
@@ -195,12 +194,16 @@ const FunnelViewScreen = () => {
             <div>
               <h3 className="text-sm font-medium text-gray-500">Preview Link</h3>
               <p className="mt-1 text-gray-900">
-                <a href={funnel.preview_link} target="_blank" rel="noopener noreferrer">
-                  {funnel.preview_link}
-                </a>
+                {funnel.preview_link ? (
+                  <a href={funnel.preview_link} target="_blank" rel="noopener noreferrer">
+                    {funnel.preview_link}
+                  </a>
+                ) : (
+                  'Preview pending. We’ll notify you by email.'
+                )}
               </p>
             </div>
-            
+
           </div>
         </div>
 
