@@ -337,6 +337,7 @@ const CreateFunnelRequest: React.FC<CreateFunnelRequestProps> = ({ editData, onC
                         <textarea
                             id="target_audience"
                             name="target_audience"
+                            required
                             rows={3}
                             value={formData.target_audience}
                             onChange={handleInputChange}
