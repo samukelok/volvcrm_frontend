@@ -62,7 +62,7 @@ const FunnelViewScreen = () => {
   };
 
   if (isLoading) return <div className="text-center py-8">Loading funnel...</div>;
-  if (error) return <div className="text-center py-8 text-red-500">Error loading funnel</div>;
+  if (error) return <div className="text-center py-8 text-red-500">Funnel Not Found</div>;
   if (!funnel) return <div className="text-center py-8">Funnel not found</div>;
 
   if (isEditing) {
