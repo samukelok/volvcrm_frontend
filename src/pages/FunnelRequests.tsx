@@ -166,9 +166,33 @@ const FunnelRequests = () => {
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-2">
                     {getStatusIcon(funnel.status)}
-                    <h3 className="text-lg font-semibold text-gray-900">{funnel.title}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900"
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 1,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: 'calc(100% - 24px)',
+                      }}
+
+                      title={funnel.title}
+                    >
+                      {funnel.title}</h3>
                   </div>
-                  <p className="text-gray-600 text-sm mb-3">{funnel.goal}</p>
+                  <p className="text-gray-600 text-sm mb-3"
+                    style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,     
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: '100%',
+                    }}
+
+                    title={funnel.goal}
+                  >
+                    {funnel.goal}</p>
                 </div>
                 <Link to={`/funnels/${funnel.id}`} className="p-2 rounded-lg hover:bg-white/50 transition-colors">
                   <Eye className="w-4 h-4 text-gray-600" />
@@ -210,7 +234,7 @@ const FunnelRequests = () => {
                     <p className="text-xs text-gray-500 mb-1">Attachments</p>
                     <div className="flex flex-wrap gap-2">
                       {funnel.media.map(media => (
-                        <a 
+                        <a
                           key={media.id}
                           href={`/storage/${media.file_path}`}
                           target="_blank"
@@ -226,7 +250,16 @@ const FunnelRequests = () => {
 
                 <div className="pt-3 border-t border-white/20">
                   <p className="text-xs text-gray-500 mb-1">Target Audience</p>
-                  <p className="text-sm text-gray-700">{funnel.target_audience}</p>
+                  <p className="text-sm text-gray-700"
+                    style={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '100%',
+                    }}
+                    title={funnel.target_audience}
+                  >
+                    {funnel.target_audience}</p>
                 </div>
 
                 <div className="flex items-center justify-between pt-2">
