@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, Download, Eye, Mail, Trash2, ChevronLeft, ChevronRight, Phone } from 'lucide-react';
+import { Search, Filter, Download, Eye, Mail, Trash2, ChevronLeft, ChevronRight, Frown, AlertCircle, Phone } from 'lucide-react';
 import axios from 'axios';
 import { useQuery } from 'react-query';
 
@@ -22,9 +22,10 @@ const Leads = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [sourceFilter, setSourceFilter] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
 
   // Fetch all leads
-  const { data: allLeads = [], isLoading, error } = useQuery<Lead[]>(
+  const { data: allLeads = [], isLoading, error, refetch } = useQuery<Lead[]>(
     'leads',
     async () => {
       const response = await axios.get('/leads');
@@ -32,16 +33,81 @@ const Leads = () => {
     }
   );
 
+  // Export leads to CSV
+  const exportToCSV = async () => {
+    setIsExporting(true);
+    try {
+      const response = await axios.get('/leads/export', {
+        responseType: 'blob',
+        headers: {
+          'Accept': 'text/csv',
+          'Cache-Control': 'no-cache'
+        },
+        timeout: 300000 // 5 minutes timeout
+      });
+
+      // Check for error in blob
+      if (response.data.type === 'application/json') {
+        const errorData = JSON.parse(await response.data.text());
+        throw new Error(errorData.message || 'Export failed');
+      }
+
+      // Create download link
+      const url = window.URL.createObjectURL(response.data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `leads_export_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+    } catch (error: any) {
+      console.error('Export error:', error);
+
+      let errorMessage = 'Export failed';
+      if (error.response?.data) {
+        try {
+          const blobText = await error.response.data.text();
+          const errorData = JSON.parse(blobText);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = error.message || errorMessage;
+        }
+      }
+
+      alert(errorMessage);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Format date for CSV export
+  const formatExportDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
   // Filter leads based on search and filters
   const filteredLeads = allLeads.filter(lead => {
-    const matchesSearch = 
+    const matchesSearch =
       lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.phone.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = statusFilter ? lead.status === statusFilter.toLowerCase() : true;
     const matchesSource = sourceFilter ? lead.source === sourceFilter : true;
-    
+
     return matchesSearch && matchesStatus && matchesSource;
   });
 
@@ -67,6 +133,13 @@ const Leads = () => {
     setCurrentPage(1);
   };
 
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('');
+    setSourceFilter('');
+    setCurrentPage(1);
+  };
+
   // Status badge styling
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -78,7 +151,7 @@ const Leads = () => {
     }
   };
 
-  // Date formatting
+  // Date formatting for UI
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -89,8 +162,25 @@ const Leads = () => {
     });
   };
 
-  if (isLoading) return <div className="p-8 text-center">Loading leads...</div>;
-  if (error) return <div className="p-8 text-center text-red-500">Error loading leads</div>;
+  if (isLoading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="p-8 text-center text-red-500">
+      <AlertCircle className="w-12 h-12 mx-auto mb-4" />
+      <h3 className="text-lg font-medium">Error loading leads</h3>
+      <p className="mt-2 text-gray-600">Please try again later</p>
+      <button
+        onClick={() => refetch()}
+        className="mt-4 btn-primary inline-flex items-center"
+      >
+        Retry
+      </button>
+    </div>
+  );
 
   return (
     <div className="space-y-8 p-6">
@@ -100,9 +190,25 @@ const Leads = () => {
           <h1 className="text-3xl font-bold text-gray-900">Leads</h1>
           <p className="mt-2 text-gray-600">Manage and track your leads from all funnels.</p>
         </div>
-        <button className="mt-4 sm:mt-0 btn-primary inline-flex items-center">
-          <Download className="w-5 h-5 mr-2" />
-          Export Leads
+        <button
+          onClick={exportToCSV}
+          disabled={isExporting || allLeads.length === 0}
+          className={`mt-4 sm:mt-0 inline-flex items-center ${isExporting || allLeads.length === 0 ? 'btn-disabled' : 'btn-primary'}`}
+        >
+          {isExporting ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Exporting...
+            </>
+          ) : (
+            <>
+              <Download className="w-5 h-5 mr-2" />
+              Export Leads ({allLeads.length})
+            </>
+          )}
         </button>
       </div>
 
@@ -150,9 +256,13 @@ const Leads = () => {
               <option value="qualified">Qualified</option>
               <option value="converted">Converted</option>
             </select>
-            <button className="btn-secondary inline-flex items-center">
+            <button
+              onClick={clearAllFilters}
+              disabled={!searchTerm && !statusFilter && !sourceFilter}
+              className={`inline-flex items-center ${!searchTerm && !statusFilter && !sourceFilter ? 'btn-disabled' : 'btn-secondary'}`}
+            >
               <Filter className="w-4 h-4 mr-2" />
-              More Filters
+              Clear Filters
             </button>
           </div>
         </div>
@@ -227,8 +337,26 @@ const Leads = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
-                    {filteredLeads.length === 0 ? 'No leads match your filters' : 'Loading leads...'}
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-4">
+                      <Frown className="w-16 h-16 text-gray-400" />
+                      <h3 className="text-lg font-medium text-gray-900">No leads found</h3>
+                      <p className="text-gray-500 max-w-md text-center">
+                        {allLeads.length === 0
+                          ? 'You currently have no leads in your system'
+                          : searchTerm || statusFilter || sourceFilter
+                            ? 'No leads match your current filters'
+                            : 'No leads available'}
+                      </p>
+                      {(searchTerm || statusFilter || sourceFilter) && (
+                        <button
+                          onClick={clearAllFilters}
+                          className="mt-4 btn-secondary inline-flex items-center"
+                        >
+                          Clear all filters
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               )}
@@ -238,45 +366,47 @@ const Leads = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-500">Leads per page:</span>
-          <select
-            className="input-field max-w-xs"
-            value={perPage}
-            onChange={handlePerPageChange}
-          >
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
-          </select>
-          <span className="text-sm text-gray-500">
-            Showing {((currentPage - 1) * perPage) + 1}-
-            {Math.min(currentPage * perPage, filteredLeads.length)} of {filteredLeads.length} leads
-          </span>
+      {filteredLeads.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-500">Leads per page:</span>
+            <select
+              className="input-field max-w-xs"
+              value={perPage}
+              onChange={handlePerPageChange}
+            >
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+            <span className="text-sm text-gray-500">
+              Showing {((currentPage - 1) * perPage) + 1}-
+              {Math.min(currentPage * perPage, filteredLeads.length)} of {filteredLeads.length} leads
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              className="btn-secondary px-4 py-2"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="px-4 py-2 text-sm text-gray-500">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              className="btn-secondary px-4 py-2"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages || filteredLeads.length === 0}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-        
-        <div className="flex items-center gap-2">
-          <button
-            className="btn-secondary px-4 py-2"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <span className="px-4 py-2 text-sm text-gray-500">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            className="btn-secondary px-4 py-2"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage >= totalPages || filteredLeads.length === 0}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
