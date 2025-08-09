@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Eye, Clock, CheckCircle, AlertCircle, Calendar } from 'lucide-react';
+import { Plus, Eye, Clock, CheckCircle, AlertCircle, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import { useQuery } from 'react-query';
 
@@ -40,10 +40,13 @@ const FunnelRequests = () => {
     priority: '',
     cta: ''
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const funnelsPerPage = 6;
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
   const filteredFunnels = data?.funnels?.filter(funnel => {
@@ -53,6 +56,14 @@ const FunnelRequests = () => {
       (filters.cta === '' || funnel.cta.toLowerCase() === filters.cta.toLowerCase())
     );
   }) || [];
+
+  // Pagination logic
+  const indexOfLastFunnel = currentPage * funnelsPerPage;
+  const indexOfFirstFunnel = indexOfLastFunnel - funnelsPerPage;
+  const currentFunnels = filteredFunnels.slice(indexOfFirstFunnel, indexOfLastFunnel);
+  const totalPages = Math.ceil(filteredFunnels.length / funnelsPerPage);
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   // Helper functions remain the same as before
   const getStatusIcon = (status: string) => {
@@ -159,121 +170,154 @@ const FunnelRequests = () => {
 
       {/* Funnels Grid */}
       {filteredFunnels.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredFunnels.map((funnel) => (
-            <div key={funnel.id} className="glass-effect rounded-2xl p-6 card-hover">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
-                    {getStatusIcon(funnel.status)}
-                    <h3 className="text-lg font-semibold text-gray-900"
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {currentFunnels.map((funnel) => (
+              <div key={funnel.id} className="glass-effect rounded-2xl p-6 card-hover">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      {getStatusIcon(funnel.status)}
+                      <h3 className="text-lg font-semibold text-gray-900"
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 1,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          maxWidth: 'calc(100% - 24px)',
+                        }}
+
+                        title={funnel.title}
+                      >
+                        {funnel.title}</h3>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-3"
                       style={{
                         display: '-webkit-box',
-                        WebkitLineClamp: 1,
+                        WebkitLineClamp: 2,     
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        maxWidth: 'calc(100% - 24px)',
+                        maxWidth: '100%',
                       }}
 
-                      title={funnel.title}
+                      title={funnel.goal}
                     >
-                      {funnel.title}</h3>
+                      {funnel.goal}</p>
                   </div>
-                  <p className="text-gray-600 text-sm mb-3"
-                    style={{
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,     
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      maxWidth: '100%',
-                    }}
-
-                    title={funnel.goal}
-                  >
-                    {funnel.goal}</p>
-                </div>
-                <Link to={`/funnels/${funnel.id}`} className="p-2 rounded-lg hover:bg-white/50 transition-colors">
-                  <Eye className="w-4 h-4 text-gray-600" />
-                </Link>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Status</span>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(funnel.status)}`}>
-                    {funnel.status}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Priority</span>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getPriorityColor(funnel.priority)}`}>
-                    {funnel.priority}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">CTA Type</span>
-                  <span className="text-sm font-medium text-gray-900">
-                    {getCTAIcon(funnel.cta)} {funnel.cta}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Deadline</span>
-                  <div className="flex items-center space-x-1 text-sm text-gray-900">
-                    <Calendar className="w-4 h-4" />
-                    <span>{new Date(funnel.deadline).toLocaleDateString()}</span>
-                  </div>
-                </div>
-
-                {funnel.media && funnel.media.length > 0 && (
-                  <div className="pt-3 border-t border-white/20">
-                    <p className="text-xs text-gray-500 mb-1">Attachments</p>
-                    <div className="flex flex-wrap gap-2">
-                      {funnel.media.map(media => (
-                        <a
-                          key={media.id}
-                          href={`/storage/${media.file_path}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline text-xs"
-                        >
-                          {media.file_name.split('/').pop()}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="pt-3 border-t border-white/20">
-                  <p className="text-xs text-gray-500 mb-1">Target Audience</p>
-                  <p className="text-sm text-gray-700"
-                    style={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      maxWidth: '100%',
-                    }}
-                    title={funnel.target_audience}
-                  >
-                    {funnel.target_audience}</p>
-                </div>
-
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-xs text-gray-500">
-                    Created {new Date(funnel.created_at).toLocaleDateString()}
-                  </span>
-                  <Link to={`/funnels/${funnel.id}`} className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                    View Details
+                  <Link to={`/funnels/${funnel.id}`} className="p-2 rounded-lg hover:bg-white/50 transition-colors">
+                    <Eye className="w-4 h-4 text-gray-600" />
                   </Link>
                 </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Status</span>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(funnel.status)}`}>
+                      {funnel.status}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Priority</span>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getPriorityColor(funnel.priority)}`}>
+                      {funnel.priority}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">CTA Type</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {getCTAIcon(funnel.cta)} {funnel.cta}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Deadline</span>
+                    <div className="flex items-center space-x-1 text-sm text-gray-900">
+                      <Calendar className="w-4 h-4" />
+                      <span>{new Date(funnel.deadline).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+
+                  {funnel.media && funnel.media.length > 0 && (
+                    <div className="pt-3 border-t border-white/20">
+                      <p className="text-xs text-gray-500 mb-1">Attachments</p>
+                      <div className="flex flex-wrap gap-2">
+                        {funnel.media.map(media => (
+                          <a
+                            key={media.id}
+                            href={`/storage/${media.file_path}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline text-xs"
+                          >
+                            {media.file_name.split('/').pop()}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-3 border-t border-white/20">
+                    <p className="text-xs text-gray-500 mb-1">Target Audience</p>
+                    <p className="text-sm text-gray-700"
+                      style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxWidth: '100%',
+                      }}
+                      title={funnel.target_audience}
+                    >
+                      {funnel.target_audience}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-xs text-gray-500">
+                      Created {new Date(funnel.created_at).toLocaleDateString()}
+                    </span>
+                    <Link to={`/funnels/${funnel.id}`} className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                      View Details
+                    </Link>
+                  </div>
+                </div>
               </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center mt-8 space-x-2">
+              <button
+                onClick={() => paginate(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-lg ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+                <button
+                  key={number}
+                  onClick={() => paginate(number)}
+                  className={`w-10 h-10 flex items-center justify-center rounded-lg ${currentPage === number ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  {number}
+                </button>
+              ))}
+
+              <button
+                onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-lg ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       ) : (
         <div className="text-center py-12">
           <div className="text-gray-500 mb-4">No funnels found matching your filters</div>
