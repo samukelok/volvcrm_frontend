@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Filter, Download, Eye, Mail, Trash2, ChevronLeft, ChevronRight, Frown, AlertCircle, Phone } from 'lucide-react';
 import axios from 'axios';
 import { useQuery } from 'react-query';
+import { useNavigate } from 'react-router-dom';
 
 interface Lead {
   id: number;
@@ -16,6 +17,8 @@ interface Lead {
 }
 
 const Leads = () => {
+  const navigate = useNavigate();
+  
   // State management
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
@@ -333,9 +336,13 @@ const Leads = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
-                        <button className="p-2 rounded-lg hover:bg-white/20 transition-colors">
+                        <button
+                          className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+                          onClick={() => navigate(`/leads/${lead.id}`)}
+                        >
                           <Eye className="w-4 h-4 text-gray-600" />
                         </button>
+
                         <button className="p-2 rounded-lg hover:bg-white/20 transition-colors">
                           <Mail className="w-4 h-4 text-gray-600" />
                         </button>

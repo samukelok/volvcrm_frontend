@@ -11,6 +11,7 @@ import Analytics from './pages/Analytics'
 import Settings from './pages/Settings'
 import Notifications from './pages/Notifications'
 import FunnelViewScreen from './pages/FunnelViewScreen'
+import LeadViewScreen from './pages/LeadViewScreen' 
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/funnel-requests/create" element={<CreateFunnelRequest />} />
         <Route path="/funnels/:id" element={<FunnelViewScreen />} />
         <Route path="/leads" element={<Leads />} />
+        <Route path="/leads/:id" element={<LeadViewScreen />} />
         <Route path="/email-templates" element={<EmailTemplates />} />
         <Route path="/team-members" element={<TeamMembers />} />
         <Route path="/analytics" element={<Analytics />} />
