@@ -33,6 +33,17 @@ const Leads = () => {
     }
   );
 
+  // Delete single lead by ID
+  const deleteLead = async (id: number) => {
+    try {
+      await axios.delete(`/leads/${id}`);
+      refetch();
+    }
+    catch (err) {
+      console.error('Error deleting lead:', err);
+    }
+  }
+
   // Export leads to CSV
   const exportToCSV = async () => {
     setIsExporting(true);
@@ -328,7 +339,14 @@ const Leads = () => {
                         <button className="p-2 rounded-lg hover:bg-white/20 transition-colors">
                           <Mail className="w-4 h-4 text-gray-600" />
                         </button>
-                        <button className="p-2 rounded-lg hover:bg-white/20 transition-colors">
+                        <button
+                          className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+                          onClick={() => {
+                            if (window.confirm(`Are you sure you want to delete lead: ${lead.name}?`)) {
+                              deleteLead(lead.id);
+                            }
+                          }}
+                        >
                           <Trash2 className="w-4 h-4 text-gray-600" />
                         </button>
                       </div>
