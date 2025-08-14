@@ -12,6 +12,7 @@ import {
     X,
     Bell,
     Search,
+    SkipBackIcon,
     User,
     UserPlus,
     PlusIcon

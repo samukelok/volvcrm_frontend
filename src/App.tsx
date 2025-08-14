@@ -12,6 +12,7 @@ import Settings from './pages/Settings'
 import Notifications from './pages/Notifications'
 import FunnelViewScreen from './pages/FunnelViewScreen'
 import LeadViewScreen from './pages/LeadViewScreen' 
+import Editor from './pages/Mailer/Editor'
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/notifications" element={<Notifications />} />
+        <Route path="/mailer" element={<Editor />} />
       </Routes>
     </Layout>
   )
