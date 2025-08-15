@@ -5,7 +5,7 @@ import Dashboard from './pages/Dashboard'
 import FunnelRequests from './pages/FunnelRequests'
 import CreateFunnelRequest from './pages/CreateFunnelRequest'
 import Leads from './pages/Leads'
-import EmailTemplates from './pages/EmailTemplates'
+// import EmailTemplates from './pages/EmailTemplates'
 import TeamMembers from './pages/TeamMembers'
 import Analytics from './pages/Analytics'
 import Settings from './pages/Settings'
@@ -13,6 +13,11 @@ import Notifications from './pages/Notifications'
 import FunnelViewScreen from './pages/FunnelViewScreen'
 import LeadViewScreen from './pages/LeadViewScreen' 
 import Editor from './pages/Mailer/Editor'
+import EmailPreview from './pages/Mailer/EmailPreview'
+import LayoutSelector from './pages/Mailer/LayoutSelector'
+import NewTemplateModal from './pages/Mailer/NewTemplateModal'
+import TemplateEditor from './pages/Mailer/TemplateEditor'
+import EmailTemplates from './pages/Mailer/EmailTemplates'
 
 function App() {
   return (
@@ -30,7 +35,38 @@ function App() {
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/notifications" element={<Notifications />} />
+
+        {/* Mailer */}
         <Route path="/mailer" element={<Editor />} />
+        <Route path="/email-templates/preview" element={<EmailPreview content="" subject="" previewMode="desktop" />} />
+        <Route
+          path="/email-templates/layouts"
+          element={
+            <LayoutSelector
+              onSelectLayout={() => {}}
+              onBack={() => {}}
+            />
+          }
+        />
+        <Route
+          path="/email-templates/new-template"
+          element={
+            <NewTemplateModal
+              isOpen={true}
+              onClose={() => {}}
+              onCreateTemplate={() => {}}
+            />
+          }
+        />
+        <Route
+          path="/email-templates/templates/:id"
+          element={
+            <TemplateEditor
+              onSave={() => {}}
+              onBack={() => {}}
+            />
+          }
+        />
       </Routes>
     </Layout>
   )
