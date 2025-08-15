@@ -141,7 +141,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             </button>
                         </div>
 
-                        {/* THIS WAS BROKEN — now fixed */}
                         <div className="flex items-center space-x-4 z-50 relative">
                             <Link
                                 to="/notifications"
@@ -175,7 +174,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </div>
                 </header>
 
-                {/* MAIN CONTENT with stacking fix */}
+                {/* MAIN CONTENT */}
                 <main className="p-6 relative z-10">
                     {children}
                 </main>

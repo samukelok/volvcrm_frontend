@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react'
 import $ from 'jquery'
 
-// Bootstrap (CSS + JS bundle includes Popper)
+// Bootstrap
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
-// Expose jQuery globally for Summernote
+// Expose jQuery globally
 declare global {
   interface Window {
     jQuery: typeof $
@@ -24,11 +24,7 @@ declare global {
 const Editor = () => {
   useEffect(() => {
     const loadEditor = async () => {
-      // Dynamically import jQuery first
-      const $ = (await import('jquery')).default
-      window.$ = window.jQuery = $ // expose globally
-
-      // Dynamically import Summernote CSS + JS
+      // Import Summernote dynamically
       await import('summernote/dist/summernote-bs4.min.css')
       await import('summernote/dist/summernote-bs4.js')
 
@@ -48,6 +44,17 @@ const Editor = () => {
           ['view', ['fullscreen', 'codeview']],
         ],
       })
+
+      // Inject default HTML content
+      const defaultHtml = `
+        <h2 style="color:#007bff;">Welcome to VolvCRM 🚀</h2>
+        <p>Hello <strong>{{Name}}</strong>,</p>
+        <p>We’re excited to have you on board! Here’s your first branded email template.</p>
+        <p><a href="{{Download}}" style="color:#007bff;">Click here to get started</a></p>
+        <br/>
+        <p>Regards,<br/>{{CompanyName}}</p>
+      `
+      $('#summernote').summernote('code', defaultHtml)
     }
 
     loadEditor()
@@ -67,19 +74,6 @@ const Editor = () => {
         </div>
         <div className="card-body">
           <form>
-            <div className="mb-3">
-              <label htmlFor="recipients" className="form-label fw-bold">
-                Recipients
-              </label>
-              <input
-                type="text"
-                id="recipients"
-                name="recipients"
-                className="form-control"
-                placeholder="Enter email addresses separated by commas"
-              />
-            </div>
-
             <div className="mb-3">
               <label htmlFor="subject" className="form-label fw-bold">
                 Subject
