@@ -4,11 +4,14 @@ import EmailPreview from './EmailPreview';
 
 interface TemplateEditorProps {
   templateData?: {
-    id?: string;
+    id?: string | number;
     name: string;
     subject: string;
-    content: string;
-    type: string;
+    body_html: string;
+    body_text?: string;
+    category?: string;
+    type?: string;
+    is_default?: boolean;
   };
   onSave: (template: any) => void;
   onBack: () => void;
@@ -21,54 +24,33 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
 }) => {
   const [templateName, setTemplateName] = useState(templateData?.name || 'Untitled Template');
   const [subject, setSubject] = useState(templateData?.subject || '');
-  const [content, setContent] = useState(templateData?.content || '');
+  const [content, setContent] = useState(templateData?.body_html || '');
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [viewMode, setViewMode] = useState<'visual' | 'code'>('visual');
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const [showTestSuccess, setShowTestSuccess] = useState(false);
+  const [editorContent, setEditorContent] = useState(templateData?.body_html || '');
 
-  // Rich text editor simulation (in production, you'd use a real editor)
-  const [editorContent, setEditorContent] = useState('');
-
+  // Initialize with the actual template data
   useEffect(() => {
-    if (templateData?.content) {
-      setContent(templateData.content);
-      setEditorContent(templateData.content);
-    } else {
-      // Default template content
-      const defaultContent = `
-        <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; padding: 20px;">
-          <h2 style="color: #3B82F6;">Welcome to {{CompanyName}}</h2>
-          <p>Hello {{Name}},</p>
-          <p>Thank you for joining us! We're excited to have you on board.</p>
-          <div style="background: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0; font-weight: bold;">What's next?</p>
-            <ul style="margin: 10px 0 0 20px; color: #4B5563;">
-              <li>Complete your profile setup</li>
-              <li>Explore our features</li>
-              <li>Get started with your first project</li>
-            </ul>
-          </div>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="{{Download}}" style="background: #3B82F6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">Get Started</a>
-          </div>
-          <p>If you have any questions, feel free to reach out!</p>
-          <p>Best regards,<br/>The {{CompanyName}} Team</p>
-        </div>
-      `;
-      setContent(defaultContent);
-      setEditorContent(defaultContent);
+    if (templateData) {
+      setTemplateName(templateData.name);
+      setSubject(templateData.subject);
+      setContent(templateData.body_html);
+      setEditorContent(templateData.body_html);
     }
   }, [templateData]);
 
   const handleSave = () => {
     const template = {
-      id: templateData?.id || Date.now().toString(),
+      id: templateData?.id,
       name: templateName,
       subject,
-      content: editorContent,
+      body_html: editorContent,
+      body_text: templateData?.body_text || '',
+      category: templateData?.category || 'custom',
       type: templateData?.type || 'custom',
-      lastModified: new Date().toISOString(),
+      is_default: templateData?.is_default || false,
     };
     
     onSave(template);
@@ -77,13 +59,14 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
   };
 
   const handleSendTest = () => {
-    // Simulate sending test email
     setShowTestSuccess(true);
     setTimeout(() => setShowTestSuccess(false), 3000);
   };
 
   const insertPlaceholder = (placeholder: string) => {
-    setEditorContent(prev => prev + ` {{${placeholder}}}`);
+    const newContent = editorContent + ` {{${placeholder}}}`;
+    setEditorContent(newContent);
+    setContent(newContent);
   };
 
   return (
@@ -193,7 +176,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-500">Insert:</span>
-              {['Name', 'CompanyName', 'Download'].map((placeholder) => (
+              {['Name', 'CompanyName', 'UnsubscribeLink'].map((placeholder) => (
                 <button
                   key={placeholder}
                   onClick={() => insertPlaceholder(placeholder)}
@@ -226,7 +209,10 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   </div>
                   <textarea
                     value={editorContent}
-                    onChange={(e) => setEditorContent(e.target.value)}
+                    onChange={(e) => {
+                      setEditorContent(e.target.value);
+                      setContent(e.target.value);
+                    }}
                     className="w-full h-[calc(100%-40px)] p-4 border-0 resize-none focus:outline-none font-mono text-sm"
                     placeholder="Enter your email content here..."
                   />
@@ -234,7 +220,10 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               ) : (
                 <textarea
                   value={editorContent}
-                  onChange={(e) => setEditorContent(e.target.value)}
+                  onChange={(e) => {
+                    setEditorContent(e.target.value);
+                    setContent(e.target.value);
+                  }}
                   className="w-full h-full p-4 border-0 resize-none focus:outline-none font-mono text-sm bg-gray-900 text-green-400"
                   placeholder="<html>...</html>"
                 />
@@ -275,7 +264,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
 
           <div className="flex-1 p-4">
             <EmailPreview
-              content={editorContent}
+              content={content}
               subject={subject}
               previewMode={previewMode}
             />

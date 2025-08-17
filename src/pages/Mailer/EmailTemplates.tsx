@@ -18,6 +18,22 @@ interface EmailTemplate {
   created_by: string;
 }
 
+interface SystemEmailTemplate {
+  id: number;
+  name: string;
+  subject: string;
+  body_html: string;
+  body_text: string;
+  category: string;
+  preview_img: string;
+  description: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  preview_img_url: string;
+}
+
 const EmailTemplates: React.FC = () => {
   const [showNewTemplateModal, setShowNewTemplateModal] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
@@ -26,6 +42,7 @@ const EmailTemplates: React.FC = () => {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -77,7 +94,8 @@ const EmailTemplates: React.FC = () => {
     }
   };
 
-  const handleCreateTemplate = (type: 'scratch' | 'layout', layoutId?: string) => {
+  // Updated to handle both creation types and system template selection
+  const handleCreateTemplate = (type: 'scratch' | 'layout' | 'system', layoutIdOrTemplate?: string | SystemEmailTemplate) => {
     if (type === 'scratch') {
       setCurrentTemplate({
         name: 'New Template',
@@ -87,18 +105,39 @@ const EmailTemplates: React.FC = () => {
         category: 'custom',
         is_default: false
       });
-    } else if (layoutId) {
-      const layoutContent = getLayoutContent(layoutId);
+      setShowEditor(true);
+    } else if (type === 'layout' && typeof layoutIdOrTemplate === 'string') {
+      const layoutContent = getLayoutContent(layoutIdOrTemplate);
       setCurrentTemplate({
-        name: `New ${layoutId.charAt(0).toUpperCase() + layoutId.slice(1)} Template`,
-        subject: getLayoutSubject(layoutId),
+        name: `New ${layoutIdOrTemplate.charAt(0).toUpperCase() + layoutIdOrTemplate.slice(1)} Template`,
+        subject: getLayoutSubject(layoutIdOrTemplate),
         body_html: layoutContent,
         body_text: '',
-        category: layoutId,
+        category: layoutIdOrTemplate,
         is_default: false
       });
+      setShowEditor(true);
+    } else if (type === 'system' && typeof layoutIdOrTemplate === 'object') {
+      // Handle system template selection
+      const systemTemplate = layoutIdOrTemplate as SystemEmailTemplate;
+      setCurrentTemplate({
+        name: `${systemTemplate.name} (Copy)`,
+        subject: systemTemplate.subject,
+        body_html: systemTemplate.body_html,
+        body_text: systemTemplate.body_text,
+        category: systemTemplate.category,
+        is_default: false,
+        originalSystemTemplateId: systemTemplate.id // Keep reference to original
+      });
+      setShowEditor(true);
+      setShowNewTemplateModal(false); 
     }
-    setShowEditor(true);
+  };
+
+  // Handle system template selection
+  const handleSelectSystemTemplate = (systemTemplate: SystemEmailTemplate) => {
+    console.log('Selected system template:', systemTemplate);
+    handleCreateTemplate('system', systemTemplate);
   };
 
   const getLayoutContent = (layoutId: string) => {
@@ -156,7 +195,7 @@ const EmailTemplates: React.FC = () => {
       if (template.id) {
         // Update existing template
         const response = await axios.put(`/email-templates/${template.id}`, template);
-        setTemplates(prev => prev.map(t => 
+        setTemplates(prev => prev.map(t =>
           t.id === template.id ? response.data : t
         ));
       } else {
@@ -165,6 +204,7 @@ const EmailTemplates: React.FC = () => {
         setTemplates(prev => [...prev, response.data]);
       }
       setShowEditor(false);
+      setCurrentTemplate(null);
     } catch (err) {
       console.error('Error saving template:', err);
       alert('Failed to save template');
@@ -189,7 +229,7 @@ const EmailTemplates: React.FC = () => {
         id: undefined
       };
       delete newTemplate.id;
-      
+
       const response = await axios.post('/email-templates', newTemplate);
       setTemplates(prev => [...prev, response.data]);
     } catch (err) {
@@ -249,7 +289,7 @@ const EmailTemplates: React.FC = () => {
             <Sparkles className="w-5 h-5 mr-2" />
             AI Assistant
           </button>
-          <button 
+          <button
             onClick={() => setShowNewTemplateModal(true)}
             className="btn-primary inline-flex items-center"
           >
@@ -324,7 +364,7 @@ const EmailTemplates: React.FC = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Last Updated</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
-                {templates.length > 0 ? 
+                {templates.length > 0 ?
                   new Date(
                     templates.reduce((latest, t) =>
                       new Date(t.updated_at) > new Date(latest) ? t.updated_at : latest,
@@ -392,19 +432,19 @@ const EmailTemplates: React.FC = () => {
 
             <div className="flex items-center justify-between pt-4 mt-4 border-t border-white/20">
               <div className="flex items-center space-x-2">
-                <button 
+                <button
                   onClick={() => handleEditTemplate(template)}
                   className="p-2 rounded-lg hover:bg-white/20 transition-colors"
                 >
                   <Edit className="w-4 h-4 text-gray-600" />
                 </button>
-                <button 
+                <button
                   onClick={() => handleDuplicateTemplate(template)}
                   className="p-2 rounded-lg hover:bg-white/20 transition-colors"
                 >
                   <Copy className="w-4 h-4 text-gray-600" />
                 </button>
-                <button 
+                <button
                   onClick={() => handleDeleteTemplate(template.id)}
                   className="p-2 rounded-lg hover:bg-white/20 transition-colors"
                 >
@@ -430,18 +470,18 @@ const EmailTemplates: React.FC = () => {
             <p className="text-sm text-gray-600">Let AI help you create and improve your email templates</p>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button className="p-4 bg-white/50 rounded-xl border border-white/20 hover:bg-white/70 transition-colors text-left">
             <h4 className="font-semibold text-gray-900 mb-1">Generate Template</h4>
             <p className="text-sm text-gray-600">Create a new email template with AI</p>
           </button>
-          
+
           <button className="p-4 bg-white/50 rounded-xl border border-white/20 hover:bg-white/70 transition-colors text-left">
             <h4 className="font-semibold text-gray-900 mb-1">Improve Existing</h4>
             <p className="text-sm text-gray-600">Enhance your current templates</p>
           </button>
-          
+
           <button className="p-4 bg-white/50 rounded-xl border border-white/20 hover:bg-white/70 transition-colors text-left">
             <h4 className="font-semibold text-gray-900 mb-1">A/B Test Ideas</h4>
             <p className="text-sm text-gray-600">Get suggestions for testing</p>
@@ -454,6 +494,7 @@ const EmailTemplates: React.FC = () => {
         isOpen={showNewTemplateModal}
         onClose={() => setShowNewTemplateModal(false)}
         onCreateTemplate={handleCreateTemplate}
+        onSelectSystemTemplate={handleSelectSystemTemplate}
       />
     </div>
   );

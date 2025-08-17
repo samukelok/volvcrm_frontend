@@ -10,13 +10,29 @@ import Analytics from './pages/Analytics'
 import Settings from './pages/Settings'
 import Notifications from './pages/Notifications'
 import FunnelViewScreen from './pages/FunnelViewScreen'
-import LeadViewScreen from './pages/LeadViewScreen' 
+import LeadViewScreen from './pages/LeadViewScreen'
 import Editor from './pages/Mailer/Editor'
 import EmailPreview from './pages/Mailer/EmailPreview'
 import LayoutSelector from './pages/Mailer/LayoutSelector'
 import NewTemplateModal from './pages/Mailer/NewTemplateModal'
 import TemplateEditor from './pages/Mailer/TemplateEditor'
 import EmailTemplates from './pages/Mailer/EmailTemplates'
+
+type SystemEmailTemplate = {
+  id: number;
+  name: string;
+  subject: string;
+  body_html: string;
+  body_text: string;
+  category: string;
+  preview_img: string;
+  description: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  preview_img_url: string;
+};
 
 function App() {
   return (
@@ -41,8 +57,8 @@ function App() {
           path="/email-templates/layouts"
           element={
             <LayoutSelector
-              onSelectLayout={() => {}}
-              onBack={() => {}}
+              onSelectLayout={() => { }}
+              onBack={() => { }}
             />
           }
         />
@@ -51,8 +67,11 @@ function App() {
           element={
             <NewTemplateModal
               isOpen={true}
-              onClose={() => {}}
-              onCreateTemplate={() => {}}
+              onClose={() => { }}
+              onCreateTemplate={() => { }}
+              onSelectSystemTemplate={(template: SystemEmailTemplate) => {
+                // Handle system template selection here
+              }}
             />
           }
         />
@@ -60,8 +79,8 @@ function App() {
           path="/email-templates/templates/:id"
           element={
             <TemplateEditor
-              onSave={() => {}}
-              onBack={() => {}}
+              onSave={() => { }}
+              onBack={() => { }}
             />
           }
         />

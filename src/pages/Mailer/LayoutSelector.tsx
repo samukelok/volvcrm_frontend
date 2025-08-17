@@ -16,10 +16,11 @@ interface SystemEmailTemplate {
   updated_at: string;
   deleted_at: string | null;
   preview_img_url: string;
-}
+} 
 
+// Updated interface to accept full template data
 interface LayoutSelectorProps {
-  onSelectLayout: (layoutId: string) => void;
+  onSelectLayout: (template: SystemEmailTemplate) => void;
   onBack: () => void;
 }
 
@@ -27,6 +28,23 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onSelectLayout, onBack 
   const [templates, setTemplates] = useState<SystemEmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const handleTemplateClick = async (template: SystemEmailTemplate) => {
+    try {
+      setLoading(true);
+      const response = await axios.get<SystemEmailTemplate>(`/api/sys-email-templates/${template.id}`);
+
+      console.log('Template data:', response.data);
+      
+      // Pass the complete template data
+      onSelectLayout(response.data);
+    } catch (err) {
+      console.error('Error fetching template:', err);
+      setError('Failed to load template details');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -142,10 +160,10 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onSelectLayout, onBack 
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-96 overflow-y-auto">
         {templates.map((template) => (
-          <div
+           <div
             key={template.id}
             className="group cursor-pointer"
-            onClick={() => onSelectLayout(template.id.toString())}
+            onClick={() => handleTemplateClick(template)} 
           >
             <div className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-blue-500 hover:shadow-lg transition-all duration-300">
               <div className="relative">

@@ -16,7 +16,7 @@ const EmailPreview: React.FC<EmailPreviewProps> = ({
     return htmlContent
       .replace(/\{\{Name\}\}/g, 'John Smith')
       .replace(/\{\{CompanyName\}\}/g, 'Solar Solutions Inc.')
-      .replace(/\{\{Download\}\}/g, '#download-link');
+      .replace(/\{\{UnsubscribeLink\}\}/g, 'volvcrm.com/unsubscribe/123');
   };
 
   const processedContent = processContent(content);
