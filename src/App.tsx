@@ -5,7 +5,6 @@ import Dashboard from './pages/Dashboard'
 import FunnelRequests from './pages/FunnelRequests'
 import CreateFunnelRequest from './pages/CreateFunnelRequest'
 import Leads from './pages/Leads'
-// import EmailTemplates from './pages/EmailTemplates'
 import TeamMembers from './pages/TeamMembers'
 import Analytics from './pages/Analytics'
 import Settings from './pages/Settings'
@@ -37,7 +36,6 @@ function App() {
         <Route path="/notifications" element={<Notifications />} />
 
         {/* Mailer */}
-        <Route path="/mailer" element={<Editor />} />
         <Route path="/email-templates/preview" element={<EmailPreview content="" subject="" previewMode="desktop" />} />
         <Route
           path="/email-templates/layouts"
