@@ -1,134 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Copy, Trash2, Sparkles, Search, Filter } from 'lucide-react';
 import NewTemplateModal from './NewTemplateModal';
 import TemplateEditor from './TemplateEditor';
+import axios from 'axios';
+
+interface EmailTemplate {
+  id: number;
+  name: string;
+  subject: string;
+  body_html: string;
+  body_text: string;
+  category: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+  user_id: number;
+  created_by: string;
+}
 
 const EmailTemplates: React.FC = () => {
   const [showNewTemplateModal, setShowNewTemplateModal] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
   const [currentTemplate, setCurrentTemplate] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const [templates, setTemplates] = useState([
-    {
-      id: 1,
-      name: 'Welcome Email',
-      subject: 'Welcome to Solar Solutions - Your Journey to Clean Energy Starts Here!',
-      templateType: 'welcome',
-      isActive: true,
-      lastModified: '2024-01-15',
-      usage: 156,
-      openRate: '89.2%',
-      content: `<div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; color: white;">
-          <h1 style="margin: 0 0 10px 0;">Welcome to {{CompanyName}}!</h1>
-          <p style="margin: 0; opacity: 0.9;">We're excited to have you on board</p>
-        </div>
-        <div style="padding: 30px 20px;">
-          <p>Hi {{Name}},</p>
-          <p>Welcome to our community! We're thrilled to have you join us on this journey.</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="{{Download}}" style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px;">Get Started</a>
-          </div>
-          <p>Best regards,<br>The {{CompanyName}} Team</p>
-        </div>
-      </div>`
-    },
-    {
-      id: 2,
-      name: 'Follow Up - Day 3',
-      subject: 'Quick question about your solar project',
-      templateType: 'follow_up',
-      isActive: true,
-      lastModified: '2024-01-12',
-      usage: 89,
-      openRate: '76.4%',
-      content: `<div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; padding: 20px;">
-        <h2 style="color: #2d3748;">Quick Follow-up</h2>
-        <p>Hello {{Name}},</p>
-        <p>I wanted to follow up on our conversation about your solar project. Do you have any questions I can help answer?</p>
-        <p>I'm here to help make your transition to clean energy as smooth as possible.</p>
-        <div style="margin: 25px 0;">
-          <a href="{{Download}}" style="background: #48bb78; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Schedule a Call</a>
-        </div>
-        <p>Best regards,<br>{{CompanyName}}</p>
-      </div>`
-    },
-    {
-      id: 3,
-      name: 'Quotation Expiry Reminder',
-      subject: 'Your solar quotation expires in 3 days - Don\'t miss out!',
-      templateType: 'quotation_expiry',
-      isActive: true,
-      lastModified: '2024-01-10',
-      usage: 45,
-      openRate: '82.1%',
-      content: `<div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
-        <div style="background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%); padding: 30px 20px; text-align: center; color: white;">
-          <h1 style="margin: 0; font-size: 28px;">⏰ Reminder</h1>
-          <p style="margin: 10px 0 0 0; font-size: 18px;">Your quote expires soon</p>
-        </div>
-        <div style="padding: 30px 20px; text-align: center;">
-          <p>Hi {{Name}},</p>
-          <h2 style="color: #e53e3e; margin: 20px 0;">Quote expires in 3 days</h2>
-          <p>Don't miss out on your solar savings opportunity!</p>
-          <a href="{{Download}}" style="background: #e53e3e; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin: 20px 0;">View Quote</a>
-          <p>Questions? Reply to this email anytime!</p>
-          <p>Best,<br>{{CompanyName}}</p>
-        </div>
-      </div>`
-    },
-    {
-      id: 4,
-      name: 'Thank You - Installation Complete',
-      subject: 'Congratulations! Your solar system is now live',
-      templateType: 'thank_you',
-      isActive: true,
-      lastModified: '2024-01-08',
-      usage: 23,
-      openRate: '94.7%',
-      content: `<div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; padding: 20px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <div style="background: #48bb78; color: white; width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 24px;">✓</div>
-          <h1 style="color: #2d3748; margin: 0;">Thank You!</h1>
-        </div>
-        <p>Dear {{Name}},</p>
-        <p>Thank you for choosing {{CompanyName}} for your solar energy needs. Your installation has been completed successfully!</p>
-        <div style="background: #f0fff4; border-left: 4px solid #48bb78; padding: 15px; margin: 20px 0;">
-          <p style="margin: 0; font-weight: bold; color: #2f855a;">Your system is now generating clean energy!</p>
-        </div>
-        <div style="text-align: center; margin: 25px 0;">
-          <a href="{{Download}}" style="background: #48bb78; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px;">Access Portal</a>
-        </div>
-        <p>Thank you for going solar!</p>
-        <p>{{CompanyName}} Team</p>
-      </div>`
-    },
-    {
-      id: 5,
-      name: 'Reactivation Campaign',
-      subject: 'Still interested in solar? Here\'s an exclusive offer',
-      templateType: 'reactivation',
-      isActive: false,
-      lastModified: '2024-01-05',
-      usage: 12,
-      openRate: '68.3%',
-      content: `<div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
-        <div style="background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%); padding: 30px 20px; text-align: center; color: white;">
-          <h1 style="margin: 0; font-size: 28px;">🌟 Special Offer!</h1>
-          <p style="margin: 10px 0 0 0; font-size: 18px;">Just for you</p>
-        </div>
-        <div style="padding: 30px 20px; text-align: center;">
-          <p>Hi {{Name}},</p>
-          <h2 style="color: #e53e3e; margin: 20px 0;">25% OFF Solar Installation</h2>
-          <p>We noticed you were interested in solar. Here's an exclusive offer!</p>
-          <a href="{{Download}}" style="background: #e53e3e; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin: 20px 0;">Claim Offer</a>
-          <p>Questions? Reply to this email anytime!</p>
-          <p>Best,<br>{{CompanyName}}</p>
-        </div>
-      </div>`
-    }
-  ]);
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const response = await axios.get('/email-templates');
+        setTemplates(response.data);
+        setLoading(false);
+      } catch (err) {
+        setError('Failed to load templates');
+        setLoading(false);
+        console.error('Error fetching templates:', err);
+      }
+    };
+
+    fetchTemplates();
+  }, []);
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -140,7 +53,7 @@ const EmailTemplates: React.FC = () => {
         return 'bg-red-100 text-red-800 border-red-200';
       case 'thank_you':
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'reactivation':
+      case 'promo':
         return 'bg-purple-100 text-purple-800 border-purple-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -157,8 +70,8 @@ const EmailTemplates: React.FC = () => {
         return 'Quotation Expiry';
       case 'thank_you':
         return 'Thank You';
-      case 'reactivation':
-        return 'Reactivation';
+      case 'promo':
+        return 'Promotional';
       default:
         return type;
     }
@@ -169,17 +82,20 @@ const EmailTemplates: React.FC = () => {
       setCurrentTemplate({
         name: 'New Template',
         subject: '',
-        content: '',
-        type: 'custom'
+        body_html: '',
+        body_text: '',
+        category: 'custom',
+        is_default: false
       });
     } else if (layoutId) {
-      // In a real app, you'd fetch the layout data
       const layoutContent = getLayoutContent(layoutId);
       setCurrentTemplate({
         name: `New ${layoutId.charAt(0).toUpperCase() + layoutId.slice(1)} Template`,
         subject: getLayoutSubject(layoutId),
-        content: layoutContent,
-        type: layoutId
+        body_html: layoutContent,
+        body_text: '',
+        category: layoutId,
+        is_default: false
       });
     }
     setShowEditor(true);
@@ -235,48 +151,62 @@ const EmailTemplates: React.FC = () => {
     return subjects[layoutId] || 'New Template';
   };
 
-  const handleSaveTemplate = (template: any) => {
-    if (template.id && templates.find(t => t.id.toString() === template.id.toString())) {
-      // Update existing template
-      setTemplates(prev => prev.map(t => 
-        t.id.toString() === template.id.toString() 
-          ? { ...t, ...template, id: parseInt(template.id) }
-          : t
-      ));
-    } else {
-      // Add new template
-      const newTemplate = {
-        ...template,
-        id: Math.max(...templates.map(t => t.id)) + 1,
-        isActive: true,
-        usage: 0,
-        openRate: '0%',
-        templateType: template.type
-      };
-      setTemplates(prev => [...prev, newTemplate]);
+  const handleSaveTemplate = async (template: any) => {
+    try {
+      if (template.id) {
+        // Update existing template
+        const response = await axios.put(`/email-templates/${template.id}`, template);
+        setTemplates(prev => prev.map(t => 
+          t.id === template.id ? response.data : t
+        ));
+      } else {
+        // Add new template
+        const response = await axios.post('/email-templates', template);
+        setTemplates(prev => [...prev, response.data]);
+      }
+      setShowEditor(false);
+    } catch (err) {
+      console.error('Error saving template:', err);
+      alert('Failed to save template');
     }
   };
 
-  const handleEditTemplate = (template: any) => {
-    setCurrentTemplate(template);
+  const handleEditTemplate = (template: EmailTemplate) => {
+    setCurrentTemplate({
+      ...template,
+      type: template.category,
+      content: template.body_html
+    });
     setShowEditor(true);
   };
 
-  const handleDuplicateTemplate = (template: any) => {
-    const duplicatedTemplate = {
-      ...template,
-      id: Math.max(...templates.map(t => t.id)) + 1,
-      name: `${template.name} (Copy)`,
-      usage: 0,
-      openRate: '0%',
-      lastModified: new Date().toISOString().split('T')[0]
-    };
-    setTemplates(prev => [...prev, duplicatedTemplate]);
+  const handleDuplicateTemplate = async (template: EmailTemplate) => {
+    try {
+      const newTemplate: Omit<EmailTemplate, 'id'> & Partial<Pick<EmailTemplate, 'id'>> = {
+        ...template,
+        name: `${template.name} (Copy)`,
+        is_default: false,
+        id: undefined
+      };
+      delete newTemplate.id;
+      
+      const response = await axios.post('/email-templates', newTemplate);
+      setTemplates(prev => [...prev, response.data]);
+    } catch (err) {
+      console.error('Error duplicating template:', err);
+      alert('Failed to duplicate template');
+    }
   };
 
-  const handleDeleteTemplate = (templateId: number) => {
+  const handleDeleteTemplate = async (templateId: number) => {
     if (confirm('Are you sure you want to delete this template?')) {
-      setTemplates(prev => prev.filter(t => t.id !== templateId));
+      try {
+        await axios.delete(`/email-templates/${templateId}`);
+        setTemplates(prev => prev.filter(t => t.id !== templateId));
+      } catch (err) {
+        console.error('Error deleting template:', err);
+        alert('Failed to delete template');
+      }
     }
   };
 
@@ -284,6 +214,14 @@ const EmailTemplates: React.FC = () => {
     template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     template.subject.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">Loading templates...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center p-4">{error}</div>;
+  }
 
   if (showEditor) {
     return (
@@ -356,9 +294,9 @@ const EmailTemplates: React.FC = () => {
         <div className="glass-effect rounded-2xl p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Templates</p>
+              <p className="text-sm font-medium text-gray-600">Default Templates</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
-                {templates.filter(t => t.isActive).length}
+                {templates.filter(t => t.is_default).length}
               </p>
             </div>
             <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
@@ -370,8 +308,10 @@ const EmailTemplates: React.FC = () => {
         <div className="glass-effect rounded-2xl p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Avg. Open Rate</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">82.1%</p>
+              <p className="text-sm font-medium text-gray-600">Categories</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">
+                {[...new Set(templates.map(t => t.category))].length}
+              </p>
             </div>
             <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-purple-600" />
@@ -382,9 +322,15 @@ const EmailTemplates: React.FC = () => {
         <div className="glass-effect rounded-2xl p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Sent</p>
+              <p className="text-sm font-medium text-gray-600">Last Updated</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
-                {templates.reduce((sum, t) => sum + t.usage, 0)}
+                {templates.length > 0 ? 
+                  new Date(
+                    templates.reduce((latest, t) =>
+                      new Date(t.updated_at) > new Date(latest) ? t.updated_at : latest,
+                      templates[0].updated_at
+                    )
+                  ).toLocaleDateString() : 'N/A'}
               </p>
             </div>
             <div className="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center">
@@ -402,13 +348,13 @@ const EmailTemplates: React.FC = () => {
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
                   <h3 className="text-lg font-semibold text-gray-900">{template.name}</h3>
-                  {template.isActive ? (
+                  {template.is_default ? (
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                      Active
+                      Default
                     </span>
                   ) : (
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
-                      Inactive
+                      Custom
                     </span>
                   )}
                 </div>
@@ -419,25 +365,27 @@ const EmailTemplates: React.FC = () => {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Type</span>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getTypeColor(template.templateType)}`}>
-                  {getTypeDisplayName(template.templateType)}
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getTypeColor(template.category)}`}>
+                  {getTypeDisplayName(template.category)}
                 </span>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Usage</span>
-                <span className="text-sm font-medium text-gray-900">{template.usage} sends</span>
+                <span className="text-sm text-gray-500">Created By</span>
+                <span className="text-sm font-medium text-gray-900">{template.created_by}</span>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Open Rate</span>
-                <span className="text-sm font-medium text-gray-900">{template.openRate}</span>
+                <span className="text-sm text-gray-500">Created</span>
+                <span className="text-sm text-gray-600">
+                  {new Date(template.created_at).toLocaleDateString()}
+                </span>
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Last Modified</span>
                 <span className="text-sm text-gray-600">
-                  {new Date(template.lastModified).toLocaleDateString()}
+                  {new Date(template.updated_at).toLocaleDateString()}
                 </span>
               </div>
             </div>
