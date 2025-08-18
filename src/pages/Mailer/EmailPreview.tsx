@@ -51,14 +51,16 @@ const EmailPreview: React.FC<EmailPreviewProps> = ({
       </div>
 
       {/* Email Content Preview */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto preview-container">
         <div className={containerClass}>
           <div 
-            className="email-preview-content"
-            dangerouslySetInnerHTML={{ __html: processedContent }}
+            className="email-preview-content p-6"
+            dangerouslySetInnerHTML={{ __html: processedContent || '<p class="text-gray-500 italic">Start typing to see your email preview...</p>' }}
             style={{
               fontSize: previewMode === 'mobile' ? '14px' : '16px',
               lineHeight: '1.6',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              color: '#374151'
             }}
           />
         </div>
