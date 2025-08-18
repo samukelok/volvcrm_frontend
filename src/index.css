@@ -83,3 +83,89 @@
 Link {
     @apply no-underline;
 }
+
+/* Fix Summernote modal z-index issues */
+.note-modal {
+  z-index: 9999 !important;
+}
+
+.note-modal .modal-backdrop {
+  z-index: 9998 !important;
+}
+
+.note-dialog {
+  z-index: 10000 !important;
+}
+
+.note-popover {
+  z-index: 9999 !important;
+}
+
+/* Ensure Summernote editor fits properly */
+.note-editor {
+  border: none !important;
+  box-shadow: none !important;
+  height: auto !important;
+}
+
+.note-editor .note-editing-area {
+  border: none !important;
+  overflow: visible !important;
+}
+
+.note-editor .note-toolbar {
+  border-bottom: 1px solid #e5e7eb !important;
+  background-color: #f9fafb !important;
+  padding: 8px 12px !important;
+  flex-shrink: 0 !important;
+}
+
+.note-editor .note-editable {
+  padding: 16px !important;
+  min-height: 250px !important;
+  line-height: 1.6 !important;
+  overflow-y: auto !important;
+  overflow-x: auto !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+/* Fix Summernote container height issues */
+.note-editor .note-editing-area .note-editable {
+  resize: vertical !important;
+}
+
+/* Ensure proper scrolling in Summernote */
+.note-editor .note-editing-area {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+
+.note-editor .note-editing-area .note-editable {
+  flex: 1 !important;
+  overflow: auto !important;
+}
+
+/* Smooth transitions for editor panels */
+.editor-panel {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Custom scrollbar for preview */
+.preview-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.preview-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.preview-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.preview-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
