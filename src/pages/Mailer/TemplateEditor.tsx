@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Save, Send, Smartphone, Monitor, Eye, Code, Palette, Type } from 'lucide-react';
 import EmailPreview from './EmailPreview';
+import $ from 'jquery';
+
+// Bootstrap
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 interface TemplateEditorProps {
   templateData?: {
@@ -17,6 +22,22 @@ interface TemplateEditorProps {
   onBack: () => void;
 }
 
+// Expose jQuery globally
+declare global {
+  interface Window {
+    jQuery: typeof $;
+    $: typeof $;
+  }
+}
+window.$ = window.jQuery = $;
+
+// Extend jQuery typings
+declare global {
+  interface JQuery {
+    summernote(...args: any[]): any;
+  }
+}
+
 const TemplateEditor: React.FC<TemplateEditorProps> = ({
   templateData,
   onSave,
@@ -26,10 +47,11 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
   const [subject, setSubject] = useState(templateData?.subject || '');
   const [content, setContent] = useState(templateData?.body_html || '');
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
-  const [viewMode, setViewMode] = useState<'visual' | 'code'>('visual');
+  const [viewMode, setViewMode] = useState<'visual'>('visual');
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const [showTestSuccess, setShowTestSuccess] = useState(false);
   const [editorContent, setEditorContent] = useState(templateData?.body_html || '');
+  const [summernoteLoaded, setSummernoteLoaded] = useState(false);
 
   // Initialize with the actual template data
   useEffect(() => {
@@ -41,18 +63,93 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     }
   }, [templateData]);
 
+  useEffect(() => {
+    const loadSummernote = async () => {
+      try {
+        // Import Summernote dynamically
+        await import('summernote/dist/summernote-bs4.min.css');
+        await import('summernote/dist/summernote-bs4.js');
+        setSummernoteLoaded(true);
+      } catch (error) {
+        console.error('Failed to load Summernote:', error);
+      }
+    };
+
+    loadSummernote();
+  }, []);
+
+  useEffect(() => {
+    if (!summernoteLoaded) return;
+
+    if (viewMode === 'visual') {
+      // Initialize Summernote
+      $('#summernote-editor').summernote({
+        placeholder: 'Compose your email template...',
+        height: 350,
+        minHeight: 300,
+        maxHeight: null,
+        tabsize: 2,
+        dialogsInBody: true,
+        disableDragAndDrop: false,
+        focus: false,
+        airMode: false,
+        disableResizeEditor: false,
+        toolbar: [
+          ['style', ['style']],
+          ['font', ['bold', 'italic', 'underline', 'clear']],
+          ['fontname', ['fontname']],
+          ['fontsize', ['fontsize']],
+          ['color', ['color']],
+          ['para', ['ul', 'ol', 'paragraph']],
+          ['insert', ['link', 'picture']],
+          ['view', ['fullscreen', 'codeview']],
+        ],
+        callbacks: {
+          onChange: function(contents: string) {
+            setEditorContent(contents);
+            setContent(contents);
+          }
+        }
+      });
+
+      // Set the existing content
+      $('#summernote-editor').summernote('code', editorContent);
+
+      // Fix modal z-index issues
+      $(document).on('show.bs.modal', '.note-modal', function() {
+        $(this).css('z-index', 9999);
+      });
+
+      // Ensure dialogs appear above everything
+      $('.note-editor .note-dialog').css('z-index', 10000);
+    }
+
+    return () => {
+      if ($('#summernote-editor').data('summernote')) {
+        $(document).off('show.bs.modal', '.note-modal');
+        $('#summernote-editor').summernote('destroy');
+      }
+    };
+  }, [viewMode, summernoteLoaded]);
+
   const handleSave = () => {
+    // Get the current content from Summernote if in visual mode
+    let currentContent = editorContent;
+    if (viewMode === 'visual' && $('#summernote-editor').data('summernote')) {
+      currentContent = $('#summernote-editor').summernote('code');
+    }
+
     const template = {
       id: templateData?.id,
       name: templateName,
       subject,
-      body_html: editorContent,
+      body_html: currentContent,
       body_text: templateData?.body_text || '',
       category: templateData?.category || 'custom',
       type: templateData?.type || 'custom',
       is_default: templateData?.is_default || false,
     };
-    
+
     onSave(template);
     setShowSaveSuccess(true);
     setTimeout(() => setShowSaveSuccess(false), 3000);
@@ -64,9 +161,13 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
   };
 
   const insertPlaceholder = (placeholder: string) => {
-    const newContent = editorContent + ` {{${placeholder}}}`;
-    setEditorContent(newContent);
-    setContent(newContent);
+    if (viewMode === 'visual' && $('#summernote-editor').data('summernote')) {
+      $('#summernote-editor').summernote('pasteHTML', ` {{${placeholder}}}`);
+    } else {
+      const newContent = editorContent + ` {{${placeholder}}}`;
+      setEditorContent(newContent);
+      setContent(newContent);
+    }
   };
 
   return (
@@ -85,7 +186,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             <div className="h-6 w-px bg-gray-300" />
             <h1 className="text-xl font-semibold text-gray-900">{templateName}</h1>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             {showSaveSuccess && (
               <div className="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm font-medium animate-fade-in">
@@ -99,14 +200,14 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             )}
             <button
               onClick={handleSendTest}
-              className="btn-secondary inline-flex items-center"
+              className="btn-secondary inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
             >
               <Send className="w-4 h-4 mr-2" />
               Send Test
             </button>
             <button
               onClick={handleSave}
-              className="btn-primary inline-flex items-center"
+              className="btn-primary inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Save className="w-4 h-4 mr-2" />
               Save Template
@@ -117,7 +218,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
 
       <div className="flex h-[calc(100vh-80px)]">
         {/* Left Panel - Editor */}
-        <div className="w-1/2 bg-white border-r border-gray-200 flex flex-col">
+        <div className="w-1/2 bg-white border-r border-gray-200 flex flex-col relative">
           <div className="p-6 border-b border-gray-200">
             <div className="space-y-4">
               <div>
@@ -131,7 +232,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Subject Line
@@ -152,28 +253,17 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setViewMode('visual')}
-                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                  viewMode === 'visual' 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-white text-gray-600 hover:bg-gray-100'
-                }`}
+                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${viewMode === 'visual'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-100'
+                  }`}
               >
                 <Eye className="w-4 h-4 inline mr-1" />
                 Visual
               </button>
-              <button
-                onClick={() => setViewMode('code')}
-                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                  viewMode === 'code' 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-white text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <Code className="w-4 h-4 inline mr-1" />
-                Code
-              </button>
+              
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-500">Insert:</span>
               {['Name', 'CompanyName', 'UnsubscribeLink'].map((placeholder) => (
@@ -190,32 +280,20 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
 
           {/* Editor Content */}
           <div className="flex-1 p-4">
-            <div className="h-full border border-gray-300 rounded-lg overflow-hidden">
+            <div className="h-full border border-gray-300 rounded-lg bg-white shadow-sm">
               {viewMode === 'visual' ? (
-                <div className="h-full">
-                  <div className="bg-gray-100 border-b border-gray-300 p-2 flex items-center space-x-2">
-                    <button className="p-1 hover:bg-gray-200 rounded">
-                      <Type className="w-4 h-4" />
-                    </button>
-                    <button className="p-1 hover:bg-gray-200 rounded">
-                      <Palette className="w-4 h-4" />
-                    </button>
-                    <div className="h-4 w-px bg-gray-300" />
-                    <select className="text-sm border-0 bg-transparent">
-                      <option>Arial</option>
-                      <option>Georgia</option>
-                      <option>Times New Roman</option>
-                    </select>
-                  </div>
-                  <textarea
-                    value={editorContent}
-                    onChange={(e) => {
-                      setEditorContent(e.target.value);
-                      setContent(e.target.value);
-                    }}
-                    className="w-full h-[calc(100%-40px)] p-4 border-0 resize-none focus:outline-none font-mono text-sm"
-                    placeholder="Enter your email content here..."
-                  />
+                <div className="h-full overflow-auto">
+                  {summernoteLoaded ? (
+                    <textarea 
+                      id="summernote-editor" 
+                      name="editordata"
+                      className="w-full"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500 bg-gray-50">
+                      Loading editor...
+                    </div>
+                  )}
                 </div>
               ) : (
                 <textarea
@@ -224,7 +302,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     setEditorContent(e.target.value);
                     setContent(e.target.value);
                   }}
-                  className="w-full h-full p-4 border-0 resize-none focus:outline-none font-mono text-sm bg-gray-900 text-green-400"
+                  className="w-full h-full p-4 border-0 resize-none focus:outline-none font-mono text-sm bg-gray-900 text-green-400 overflow-auto"
                   placeholder="<html>...</html>"
                 />
               )}
@@ -233,28 +311,26 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
         </div>
 
         {/* Right Panel - Preview */}
-        <div className="w-1/2 bg-gray-100 flex flex-col">
-          <div className="p-4 bg-white border-b border-gray-200">
+        <div className="w-1/2 bg-gray-50 flex flex-col">
+          <div className="p-4 bg-white border-b border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">Live Preview</h3>
               <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={() => setPreviewMode('desktop')}
-                  className={`p-2 rounded transition-colors ${
-                    previewMode === 'desktop'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
+                  className={`p-2 rounded transition-colors ${previewMode === 'desktop'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                    }`}
                 >
                   <Monitor className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setPreviewMode('mobile')}
-                  className={`p-2 rounded transition-colors ${
-                    previewMode === 'mobile'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
+                  className={`p-2 rounded transition-colors ${previewMode === 'mobile'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                    }`}
                 >
                   <Smartphone className="w-4 h-4" />
                 </button>
@@ -262,12 +338,16 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             </div>
           </div>
 
-          <div className="flex-1 p-4">
+          <div className="flex-1 p-4 overflow-hidden">
+            <div className="h-full bg-white border border-gray-300 rounded-lg shadow-sm overflow-auto">
+              <div className="p-4">
             <EmailPreview
               content={content}
               subject={subject}
               previewMode={previewMode}
             />
+              </div>
+            </div>
           </div>
         </div>
       </div>
